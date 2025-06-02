@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度研究 （Deep Research） </title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        select,
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .report-container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            min-height: 200px;
+        }
+
+        .report-content {
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status.info {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            display: block;
+        }
+
+        .status.error {
+            background-color: #ffebee;
+            color: #d32f2f;
+            display: block;
+        }
+
+        .status.success {
+            background-color: #e8f5e9;
+            color: #388e3c;
+            display: block;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+        }
+
+        .save-btn {
+            background-color: #2ecc71;
+        }
+
+        .save-btn:hover {
+            background-color: #27ae60;
+        }
+
+        .new-report-btn {
+            background-color: #9b59b6;
+        }
+
+        .new-report-btn:hover {
+            background-color: #8e44ad;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>深度研究 （Deep Research）</h1>
+
+    <div class="form-container">
+        <div class="form-group">
+            <label for="industry">选择:</label>
+            <select id="industry" name="industry">
+                {% for key, value in industry_names.items() %}
+                <option value="{{ key }}">{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="query">分析问题:</label>
+            <textarea id="query" name="query" placeholder="例如: 2025年llm最新动态，有哪些机会"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="max_iterations">搜索深度 (1-5):</label>
+            <input type="number" id="max_iterations" name="max_iterations" min="1" max="5" value="5">
+        </div>
+
+        <button id="generate-btn" onclick="generateReport()">生成分析报告</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div class="report-container">
+        <h2>分析报告</h2>
+        <div id="report-content" class="report-content"></div>
+
+        <div id="action-buttons" class="action-buttons" style="display: none;">
+            <button id="save-btn" class="save-btn" onclick="saveReport()">保存报告</button>
+            <button id="new-report-btn" class="new-report-btn" onclick="newReport()">新建报告</button>
+        </div>
+    </div>
+
+    <script>
+        let currentReportContent = "";
+
+        function generateReport() {
+            const industry = document.getElementById('industry').value;
+            const query = document.getElementById('query').value.trim();
+            const maxIterations = document.getElementById('max_iterations').value;
+
+            if (!query) {
+                showStatus('请输入分析问题', 'error');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generate-btn');
+            generateBtn.disabled = true;
+            generateBtn.textContent = '生成中...';
+
+            showStatus('正在收集和分析数据，请稍候...', 'info');
+            document.getElementById('report-content').textContent = '';
+            document.getElementById('action-buttons').style.display = 'none';
+
+            currentReportContent = "";
+
+            fetch('/generate-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'query': query,
+                    'industry': industry,
+                    'max_iterations': maxIterations
+                })
+            })
+                .then(response => {
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+
+                    function readChunk() {
+                        return reader.read().then(({ done, value }) => {
+                            if (done) {
+                                generateBtn.disabled = false;
+                                generateBtn.textContent = '生成分析报告';
+                                document.getElementById('action-buttons').style.display = 'flex';
+                                showStatus('报告生成完成', 'success');
+                                return;
+                            }
+
+                            const chunk = decoder.decode(value);
+                            if (chunk.startsWith('data: ') && !chunk.includes('[DONE]')) {
+                                try {
+                                    const data = JSON.parse(chunk.replace('data: ', ''));
+                                    if (data.error) {
+                                        showStatus(data.error, 'error');
+                                        return;
+                                    }
+                                    if (data.content) {
+                                        currentReportContent += data.content;
+                                        document.getElementById('report-content').textContent = currentReportContent;
+                                        document.getElementById('report-content').scrollTop =
+                                            document.getElementById('report-content').scrollHeight;
+                                    }
+                                } catch (e) {
+                                    console.error('解析错误:', e);
+                                }
+                            }
+
+                            return readChunk();
+                        });
+                    }
+
+                    return readChunk();
+                })
+                .catch(error => {
+                    showStatus('报告生成过程中出现错误: ' + error, 'error');
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = '生成分析报告';
+                });
+        }
+        function saveReport() {
+            const industry = document.getElementById('industry').value;
+            const query = document.getElementById('query').value.trim();
+
+            if (!currentReportContent) {
+                showStatus('没有可保存的报告内容', 'error');
+                return;
+            }
+
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+
+            fetch('/save-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'query': query,
+                    'industry': industry,
+                    'report_content': currentReportContent
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showStatus(data.error, 'error');
+                    } else {
+                        showStatus(`报告已保存为 ${data.filename}`, 'success');
+                    }
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = '保存报告';
+                })
+                .catch(error => {
+                    showStatus('保存报告时出错: ' + error, 'error');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = '保存报告';
+                });
+        }
+
+        function newReport() {
+            document.getElementById('query').value = '';
+            document.getElementById('report-content').textContent = '';
+            document.getElementById('action-buttons').style.display = 'none';
+            currentReportContent = "";
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+    </script>
+</body>
+
+</html>
