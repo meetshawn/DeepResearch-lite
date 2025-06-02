@@ -29,6 +29,11 @@ deep Research（使用网络搜索和LLM） - 带FastAPI前端
 ## 架构图
 ![架构图](/doc/deepResearch.png)(https://github.com/meetshawn/DeepResearch-lite/blob/main/doc/deepResearch.png)
 
+## 演示效果
+
+![界面](/doc/report1.png)
+![界面](/doc/report2.png)
+![报告](/doc/show.jpeg)
 
 ## 部署指南
 
