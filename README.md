@@ -26,6 +26,10 @@ deep Research（使用网络搜索和LLM） - 带FastAPI前端
 
 新增FastAPI前端提供交互界面。
 
+## 架构图
+![架构图](/doc/deepResearch.png)(https://github.com/meetshawn/DeepResearch-lite/blob/main/doc/deepResearch.png)
+
+
 ## 部署指南
 
 ### 环境要求
@@ -39,8 +43,8 @@ deep Research（使用网络搜索和LLM） - 带FastAPI前端
 
 1. 克隆仓库：
    ```bash
-   git clone https://github.com/your-repo/industry-analysis-generator.git
-   cd industry-analysis-generator
+   git clone https://github.com/meetshawn/DeepResearch-lite.git
+   cd DeepResearch-lite
    ```
 
 2. 创建并激活虚拟环境：
